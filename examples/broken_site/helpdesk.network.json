@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "description": "A deliberately broken example network."
+  },
+  "llm_config": {
+    "model_name": "${HELPDESK_MODEL}"
+  },
+  "tools": [
+    {
+      "name": "helpdesk_router",
+      "function": {
+        "description": "Routes helpdesk questions."
+      },
+      "instructions": "Route each question to the right specialist.",
+      "tools": [
+        "front_desk",
+        "billing_agent",
+        "http://partner.example/agents/tracking"
+      ]
+    },
+    {
+      "name": "front_desk",
+      "function": {
+        "description": "Greets visitors."
+      },
+      "instructions": "Greet the visitor.",
+      "allow": {
+        "to_downstream": {
+          "sly_data": [
+            "*"
+          ]
+        }
+      },
+      "tools": []
+    },
+    {
+      "name": "faq",
+      "instructions": "Answer from C:\\helpdesk\\faq.txt",
+      "tools": []
+    }
+  ]
+}

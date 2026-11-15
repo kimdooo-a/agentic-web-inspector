@@ -1,0 +1,252 @@
+// The check catalog: every check the inspector runs, the part of the
+// Open Agentic Web MVP specification (Profile 0.2) it comes from, and how to fix it.
+// The page, the CLI and the agents all read this one list.
+
+/** Severity of a check that does not pass. */
+export const Level = Object.freeze({
+  FAIL: "fail",
+  WARN: "warn",
+  INFO: "info",
+});
+
+/**
+ * One entry per check. `section` points to the MVP spec section, `level` is what a
+ * failure costs, and `fix` is the plain-language repair.
+ */
+export const CHECKS = Object.freeze([
+  {
+    id: "target.url",
+    group: "Address",
+    title: "The address is a network URL or a site folder",
+    section: "3.2 (1) Reference",
+    level: Level.FAIL,
+    why: "A peer network is named by an HTTP(S) URL whose last path segment is the network name; the folder before it holds agent-manifest.json.",
+    fix: "Give the folder that holds agent-manifest.json, or that folder followed by the network name, such as https://example.org/agents/my_network.",
+  },
+  {
+    id: "target.https",
+    group: "Address",
+    title: "Served over HTTPS",
+    section: "3.2 (1), 3.3",
+    level: Level.FAIL,
+    why: "HTTPS is required except during local development (loopback hosts).",
+    fix: "Publish the bundle on an HTTPS host. Most static hosts (GitHub Pages, Cloudflare Pages, Netlify) give HTTPS by default.",
+  },
+  {
+    id: "manifest.reachable",
+    group: "Public files",
+    title: "agent-manifest.json answers a public GET",
+    section: "3.3 Minimum Public Files",
+    level: Level.FAIL,
+    why: "Callers locate every network through the site's static agent-manifest.json at the derived site base.",
+    fix: "Upload agent-manifest.json to the site base folder and check that it returns HTTP 200 without a login.",
+  },
+  {
+    id: "manifest.cors",
+    group: "Public files",
+    title: "Other origins may read agent-manifest.json (CORS)",
+    section: "3.3, 3.4 Browser Origin Requirements",
+    level: Level.WARN,
+    why: "A caller site runs in another origin. Without Access-Control-Allow-Origin the browser hides the manifest, so no other agent site can load the network. Conformance allows a co-bundled, same-origin deployment, so this decides whether the site is callable, not whether it conforms.",
+    fix: "Send Access-Control-Allow-Origin: * on agent-manifest.json (for example in a _headers or .htaccess file). Do not add it to business endpoints.",
+  },
+  {
+    id: "manifest.json",
+    group: "Public files",
+    title: "agent-manifest.json is valid JSON",
+    section: "3.3",
+    level: Level.FAIL,
+    why: "The runtime parses the manifest as JSON before it can resolve a network.",
+    fix: "Validate the file with a JSON linter. Remove comments and trailing commas.",
+  },
+  {
+    id: "manifest.networks",
+    group: "Public files",
+    title: "Each network entry has name, front_man and hocon",
+    section: "3.3",
+    level: Level.FAIL,
+    why: "The manifest maps network names to their front agent and their resolved definition.",
+    fix: "List each network as {\"name\", \"front_man\", \"hocon\"} under \"networks\".",
+  },
+  {
+    id: "manifest.exact_match",
+    group: "Resolution",
+    title: "The requested network name matches exactly",
+    section: "3.2 (5) Published network resolution",
+    level: Level.FAIL,
+    why: "If no entry matches the requested name exactly, the runtime must fail rather than pick another network.",
+    fix: "Use the exact \"name\" from agent-manifest.json as the last path segment of the network URL.",
+  },
+  {
+    id: "manifest.router",
+    group: "Inference",
+    title: "The manifest names a default LLM router",
+    section: "3.3, 4 Pluggable Inference",
+    level: Level.WARN,
+    why: "The manifest carries top-site LLM router metadata, so the network can run on the site's default path or a visitor's own key.",
+    fix: "Add \"llm_router\": {\"base_url\": \"https://...\", \"byok_router\": \"https://...\", \"mock\": false}.",
+  },
+  {
+    id: "manifest.peer_policy",
+    group: "Trust",
+    title: "A peer policy is declared",
+    section: "3.3, 5",
+    level: Level.WARN,
+    why: "Peer-policy metadata states which peer origins may be contacted; the runtime refuses others unless the policy is open.",
+    fix: "Add \"peer_policy\": {\"mode\": \"closed\"} and list each partner origin in \"allowed_peers\".",
+  },
+  {
+    id: "manifest.allowed_peers",
+    group: "Trust",
+    title: "Allowed peers are plain HTTPS origins",
+    section: "3.2 (4) Consent, 5 Explicit destinations",
+    level: Level.WARN,
+    why: "An origin is scheme, host and port. A path or a wildcard in allowed_peers does not name one destination.",
+    fix: "Write each entry as an origin such as https://partner.example, without a path.",
+  },
+  {
+    id: "secrets.none",
+    group: "Inference",
+    title: "No keys or tokens in public files",
+    section: "4 Credential handling",
+    level: Level.FAIL,
+    why: "A key must never appear in URLs, manifests or the agent network specification. Published files are public by design.",
+    fix: "Remove the key and rotate it with the provider. Visitors bring their own key through the settings panel.",
+  },
+  {
+    id: "definition.reachable",
+    group: "Resolution",
+    title: "The network definition named by the manifest loads",
+    section: "3.2 (6) Definition fetch",
+    level: Level.FAIL,
+    why: "The runtime resolves the manifest's hocon value against the site base and fetches it before execution.",
+    fix: "Check the \"hocon\" path in agent-manifest.json. Relative paths resolve against the folder that holds the manifest.",
+  },
+  {
+    id: "definition.cors",
+    group: "Resolution",
+    title: "Other origins may read the network definition (CORS)",
+    section: "3.3, 3.4",
+    level: Level.WARN,
+    why: "When a caller retrieves the definition from another origin, the publisher must permit browser access.",
+    fix: "Send Access-Control-Allow-Origin: * on the .network.json file as well as on the manifest.",
+  },
+  {
+    id: "definition.json",
+    group: "Network",
+    title: "The definition is published as resolved JSON",
+    section: "2 Common Multi Agent Representation",
+    level: Level.FAIL,
+    why: "A site may publish an equivalent, fully resolved JSON document for browser loading.",
+    fix: "Build the .hocon into a .network.json and point the manifest's hocon value to it.",
+  },
+  {
+    id: "definition.data_only",
+    group: "Network",
+    title: "Data only: no includes, substitutions or local paths",
+    section: "2, 2.2 Portable Data Profile",
+    level: Level.FAIL,
+    why: "The published form must not depend on local includes, environment substitutions or publisher-only file paths.",
+    fix: "Resolve includes and ${...} substitutions at build time and remove file:// and drive paths.",
+  },
+  {
+    id: "definition.validates",
+    group: "Network",
+    title: "The reference runtime validator accepts the network",
+    section: "3.1 Parse and validate",
+    level: Level.FAIL,
+    why: "Runtimes reject malformed networks, duplicate or missing agent references and an invalid front agent before any model call.",
+    fix: "Fix each validator message. Every name in an agent's tools must be another agent, a URL or an MCP descriptor.",
+  },
+  {
+    id: "definition.front_agent",
+    group: "Network",
+    title: "The manifest's front_man is the network's front agent",
+    section: "2.1 Identity and metadata",
+    level: Level.FAIL,
+    why: "A network names its front agent, the public entry point. The manifest and the graph must agree.",
+    fix: "Set front_man in agent-manifest.json to the agent that no other agent calls.",
+  },
+  {
+    id: "definition.agents_complete",
+    group: "Network",
+    title: "Every agent has a description and instructions",
+    section: "2.1 Internal Agent definitions",
+    level: Level.WARN,
+    why: "Each agent has a function description and instructions when it uses an LLM, so callers and models know when to use it.",
+    fix: "Add function.description and instructions to each agent listed in the message.",
+  },
+  {
+    id: "definition.schemas",
+    group: "Network",
+    title: "Callable agents expose JSON Schema inputs",
+    section: "2.1 Invocation schemas",
+    level: Level.WARN,
+    why: "Callable agents and tools expose JSON Schema-compatible inputs.",
+    fix: "Add function.parameters as {\"type\": \"object\", \"properties\": {...}}.",
+  },
+  {
+    id: "definition.multi_agent",
+    group: "Network",
+    title: "At least two agents",
+    section: "6 MVP Interoperability Checks",
+    level: Level.INFO,
+    why: "The interoperability checks start from a two-agent network: a front agent and one it delegates to.",
+    fix: "Split one job out of the front agent into a specialist it calls.",
+  },
+  {
+    id: "definition.externals",
+    group: "Trust",
+    title: "External networks and MCP servers are allowed by the peer policy",
+    section: "2.1 External capabilities, 3.2 (4)",
+    level: Level.WARN,
+    why: "The runtime refuses a peer origin the manifest does not allow, unless peer_policy is open. HTTPS is required outside local development.",
+    fix: "Add each external origin to allowed_peers, or remove the reference.",
+  },
+  {
+    id: "definition.private_context",
+    group: "Trust",
+    title: "Private context passes only by named fields",
+    section: "2.1 Private context rules, 5 Private context by exception",
+    level: Level.WARN,
+    why: "Private data is deny-by-default across boundaries; a network must explicitly name the fields that may pass. A \"*\" forwards everything.",
+    fix: "Replace \"*\" in allow.to_downstream.sly_data or allow.to_upstream.sly_data with the field names that must pass.",
+  },
+  {
+    id: "links.file",
+    group: "Public files",
+    title: "links.json is published and well formed",
+    section: "3.3 links.json (peer-network link map)",
+    level: Level.WARN,
+    why: "links.json holds the publisher's default bindings from symbolic peer names to concrete network URLs.",
+    fix: "Publish {\"version\": 1, \"networks\": {\"<network>\": {}}} next to the manifest, with absolute HTTP(S) URLs as values.",
+  },
+  {
+    id: "coded_tools.integrity",
+    group: "Trust",
+    title: "Coded-tool bundles carry an integrity digest",
+    section: "5 Optional peer code",
+    level: Level.INFO,
+    why: "A coded-tool bundle is untrusted code. When the manifest supplies an SRI digest, the runtime must verify it before execution.",
+    fix: "Add an sha384- digest of the bundle to the manifest entry that declares it.",
+  },
+  {
+    id: "discovery.well_known",
+    group: "Public files",
+    title: "Optional discovery metadata under /.well-known/",
+    section: "3.3 Optional discovery metadata",
+    level: Level.INFO,
+    why: "Discovery files are optional. Tools look for them at the domain root.",
+    fix: "Optional: publish /.well-known/nsdeploy.json with the manifest's linking block.",
+  },
+]);
+
+/** Look up a check by id. */
+export function checkById(id) {
+  return CHECKS.find((check) => check.id === id) || null;
+}
+
+/** All check ids, in catalog order. */
+export function checkIds() {
+  return CHECKS.map((check) => check.id);
+}

@@ -1,0 +1,80 @@
+{
+  "brand": "Agentic Web Inspector",
+  "networks": [
+    {
+      "name": "agentic_web_inspector",
+      "front_man": "inspector_desk",
+      "hocon": "./agentic_web_inspector.network.json",
+      "description": "Inspects open agentic websites against the MVP specification and explains how to fix what it finds.",
+      "tags": [
+        "agentified-website",
+        "developer-tool",
+        "conformance"
+      ],
+      "sample_queries": [
+        "Is the Open Agentic Web Challenge guide callable from my site?",
+        "Explain the failures in the report on this page and give me a fix plan.",
+        "What does the CORS check mean, and which spec section is it from?",
+        "Which known agentic websites can I inspect?",
+        "Deploy my site to Netlify for me."
+      ]
+    }
+  ],
+  "llm_router": {
+    "base_url": "https://api.otari.ai/api/v1",
+    "mock": false,
+    "byok_router": "https://api.otari.ai/api/v1"
+  },
+  "allowed_peers": [],
+  "peer_policy": {
+    "mode": "closed",
+    "deny_origins": [],
+    "note": "Local agents and page-local actions only. Inspections are page actions the visitor confirms."
+  },
+  "agent_mcp": {
+    "protocol": "nsdeploy-agent-mcp/v1",
+    "network": "agentic_web_inspector",
+    "front_man": "inspector_desk",
+    "available": false,
+    "reason": "This is a static bundle; a public MCP facade requires an application host."
+  },
+  "theme": {
+    "primary": "#0b5c55"
+  },
+  "linking": {
+    "protocol": "nsdeploy-link/v1",
+    "exports": [
+      {
+        "network": "agentic_web_inspector",
+        "front_man": "inspector_desk",
+        "aliases": [
+          "agentic_web_inspector",
+          "inspector_desk"
+        ],
+        "url": "agentic_web_inspector"
+      }
+    ],
+    "imports": [],
+    "link_updates": {
+      "mode": "browser-local"
+    }
+  },
+  "deployment": {
+    "mode": "static",
+    "self_contained_runtime": true,
+    "browser_mock": false,
+    "direct_byok": true,
+    "direct_mcp_requires_cors": true,
+    "public_mcp_facade": false
+  },
+  "actions": {
+    "version": 1,
+    "module": "./site-actions.js",
+    "bridge": "./bridge/action-bridge.html",
+    "agentTools": [
+      "get_inspection",
+      "get_checklist",
+      "inspect_site"
+    ]
+  }
+}

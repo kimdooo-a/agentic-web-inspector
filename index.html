@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Agentic Web Inspector</title>
+    <meta name="description" content="Check an open agentic website against the MVP specification, in your own browser: can other agent sites load and run its network?">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="assistant.css">
+    <script type="module" src="app.js"></script>
+    <script type="module" src="site.js"></script>
+  </head>
+  <body>
+    <header class="masthead">
+      <div class="wrap">
+        <a class="brand" href="./">
+          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="13" cy="13" r="8.5" fill="none" stroke="currentColor" stroke-width="3"/><path d="M19.5 19.5 28 28" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/><path d="M9.2 13.2l2.7 2.7 5-5.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Agentic Web Inspector</span>
+        </a>
+        <nav class="topnav" aria-label="Sections">
+          <a href="#inspect">Inspect</a>
+          <a href="#assistant">Ask the inspector</a>
+          <a href="#about">How it works</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section id="inspect" class="hero" aria-labelledby="inspect-heading">
+        <div class="wrap">
+          <p class="eyebrow">Open Agentic Web · MVP Profile 0.2</p>
+          <h1 id="inspect-heading">Can other agent sites call yours?</h1>
+          <p class="lede">Paste a network URL or a site folder. This page reads the site's public agent files from your browser, the same way a caller site would, and checks them against the specification. Nothing is installed, and no key is needed.</p>
+          <form id="inspect-form" class="inspect-form" novalidate>
+            <label for="inspect-url" class="visually-hidden">Network URL or site folder</label>
+            <input id="inspect-url" name="url" type="text" inputmode="url" autocomplete="url" spellcheck="false" placeholder="https://example.org/agents/my_network" aria-describedby="inspect-error inspect-progress" maxlength="500">
+            <button id="inspect-button" type="submit">Inspect</button>
+          </form>
+          <p id="inspect-error" class="form-error" role="alert"></p>
+          <p id="inspect-progress" class="form-progress" role="status"></p>
+          <div class="presets-row">
+            <span class="presets-label">Try:</span>
+            <div id="presets" class="presets"></div>
+          </div>
+          <div class="history-row" hidden>
+            <span class="presets-label">Recent:</span>
+            <ul id="history" class="history"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="results" class="results" aria-labelledby="results-heading" hidden>
+        <div class="wrap">
+          <div class="results-head">
+            <h2 id="results-heading">Report</h2>
+            <div class="results-actions">
+              <button id="copy-report" type="button" class="ghost">Copy as Markdown</button>
+              <button id="download-report" type="button" class="ghost">Download JSON</button>
+            </div>
+          </div>
+          <div id="verdict" class="verdict"></div>
+          <div class="results-grid">
+            <div id="checks" class="checks"></div>
+            <div class="networks-col">
+              <h2 class="col-heading">Networks found</h2>
+              <div id="networks" class="networks"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="assistant" class="assistant" aria-labelledby="assistant-heading">
+        <div class="wrap">
+          <h2 id="assistant-heading">Ask the inspector</h2>
+          <p>The inspector's own agent network runs in this page: it can inspect a site for you, explain each check in plain words and plan the fixes, using the same checks as the form above.</p>
+          <p class="assistant-note">Your messages and this page's report go to the LLM provider you choose in the settings below, on your own key. Before the assistant contacts any website, your browser asks you.</p>
+          <p id="assistant-status" role="status">Connecting the assistant… If this message stays, the assistant could not load. You can still use the inspector above.</p>
+          <div id="agent-app">
+            <div data-ns-slot="header"></div>
+            <div class="assistant-panels">
+              <div data-ns-slot="chat"></div>
+              <div data-ns-slot="agents"></div>
+            </div>
+            <div data-ns-slot="settings"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="about" class="about" aria-labelledby="about-heading">
+        <div class="wrap">
+          <h2 id="about-heading">How it works</h2>
+          <div class="about-grid">
+            <article>
+              <h3>Checked by a real browser</h3>
+              <p>A caller site runs in another origin, so whether it can load your network is decided by the browser's CORS rules. A command-line check can only read headers. This page asks the browser itself: if it can read your manifest and network from here, so can other agent sites.</p>
+            </article>
+            <article>
+              <h3>Validated by the reference runtime</h3>
+              <p>Network definitions are parsed and validated with the browser runtime's own kernel, the code that will run them. Then 25 checks map each rule of the MVP profile to a file, a result and a fix.</p>
+            </article>
+            <article>
+              <h3>Read only, nothing sent</h3>
+              <p>An inspection fetches public files without cookies or credentials. It never runs the inspected site's code or agents, and masks anything that looks like a key.</p>
+            </article>
+            <article>
+              <h3>Also in your terminal</h3>
+              <p>The same checks run in CI: <code>node tools/inspect.mjs https://your.site/agents/my_network --strict</code> exits non-zero when a check fails.</p>
+            </article>
+          </div>
+          <p class="about-links">This site is itself an open agentic website. Network URL: <code id="own-network-url">agentic_web_inspector</code> · <a href="agent-manifest.json">agent-manifest.json</a> · <a href="agentic_web_inspector.network.json">network definition</a> · <a href="https://github.com/cognizant-ai-labs/agentic-web/blob/main/docs/worldwide_agentic_web_mvp_spec.md">MVP specification</a></p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap">
+        <p>Agentic Web Inspector · MIT License · the browser runtime in <code>runtime/</code> is the Apache-2.0 nsdeploy runtime from the agentic-web repository.</p>
+      </div>
+    </footer>
+    <script type="module">
+      // Show this site's own network URL.
+      const el = document.querySelector("#own-network-url");
+      el.textContent = new URL("agentic_web_inspector", location.href).href;
+    </script>
+  </body>
+</html>

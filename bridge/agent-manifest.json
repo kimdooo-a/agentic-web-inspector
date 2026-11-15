@@ -1,0 +1,10 @@
+{
+  "networks": [
+    {
+      "name": "agentic_web_inspector"
+    }
+  ],
+  "actions": {
+    "version": 1
+  }
+}

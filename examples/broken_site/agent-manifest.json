@@ -1,0 +1,19 @@
+{
+  "brand": "Example Helpdesk (deliberately broken)",
+  "networks": [
+    {
+      "name": "helpdesk",
+      "front_man": "front_desk",
+      "hocon": "./helpdesk.network.json",
+      "description": "A deliberately broken example for the Agentic Web Inspector. Do not copy it."
+    }
+  ],
+  "llm_router": {
+    "base_url": "http://router.example/v1",
+    "api_key": "sk-proj-EXAMPLEnotARealKey000000000000",
+    "mock": false
+  },
+  "allowed_peers": ["https://partner.example/agents/"],
+  "peer_policy": {"mode": "closed"},
+  "deployment": {"mode": "static"}
+}
