@@ -2,6 +2,9 @@
 
 **Can other agent sites call yours?** Paste a network URL and find out, in your own browser.
 
+**Live site:** https://kimdooo-a.github.io/agentic-web-inspector/  
+**Network URL:** `https://kimdooo-a.github.io/agentic-web-inspector/agentic_web_inspector`
+
 The Agentic Web Inspector checks an open agentic website against the
 [Open Agentic Web MVP specification](https://github.com/cognizant-ai-labs/agentic-web/blob/main/docs/worldwide_agentic_web_mvp_spec.md)
 (Profile 0.2). It reads the site's public agent files the same way a caller site does,
